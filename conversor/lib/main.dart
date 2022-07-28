@@ -82,7 +82,7 @@ class _HomeState extends State<Home> {
       _clearAll();
       return;
     }
-
+k
     double bitcoin = double.parse(text);
     realController.text = (bitcoin * this.bitcoin).toStringAsFixed(2);
     dolarController.text = (bitcoin * this.bitcoin / dolar).toStringAsFixed(2);
