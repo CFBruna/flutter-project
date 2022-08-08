@@ -2,6 +2,10 @@ import 'dart:io';
 
 import 'package:agenda/helpers/contact_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+
+
 
 class ContactPage extends StatefulWidget {
   final Contact contact;
@@ -17,6 +21,10 @@ class _ContactPageState extends State<ContactPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  final ImagePicker _picker = ImagePicker();
+
+  final _nameFocus = FocusNode();
 
   bool _userEdited = false;
 
@@ -38,16 +46,26 @@ class _ContactPageState extends State<ContactPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _requestPop,
+      child: Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueGrey,
         title: Text(_editedContact.name ?? "Novo Contato"),
         centerTitle: true,
       ),
+
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          if (_editedContact.name != null && _editedContact.name.isNotEmpty){
+            Navigator.pop(context , _editedContact);
+          } else {
+            FocusScope.of(context).requestFocus(_nameFocus);
+
+          }
+        },
         child: Icon(Icons.save),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blueGrey,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(10.0),
@@ -63,14 +81,28 @@ class _ContactPageState extends State<ContactPage> {
                     image: _editedContact.img != null ?
                     FileImage(File(_editedContact.img)) :
                     AssetImage("images/person.png"),
+                      fit: BoxFit.cover
                   ),
                 ),
               ),
+              onTap: () async {
+                await _picker.getImage(source: ImageSource.gallery).then((file){
+                  if(file == null) {
+                  return;
+                  } else {
+                    setState((){
+                    _editedContact.img = file.path;
+                  });
+                }});
+
+
+              },
             ),
             TextField(
               controller: _nameController,
+              focusNode: _nameFocus,
               decoration: InputDecoration(
-                labelText: "Nome"),
+                  labelText: "Nome"),
               onChanged: (text){
                 _userEdited = true;
 
@@ -102,6 +134,40 @@ class _ContactPageState extends State<ContactPage> {
           ],
         ),
       ),
+    ),
     );
   }
+
+  Future<bool> _requestPop(){
+    if(_userEdited){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Descartar Alterações?"),
+          content: Text("Se sair todas as alterações serão perdidas!"),
+          actions: [
+            TextButton(
+              child: Text("Sim"),
+              onPressed: (){
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: Text("Cancelar"),
+              onPressed:(){
+                Navigator.pop(context);
+
+              } ,
+            ),
+          ],
+        );
+      }
+      );
+      return Future.value(false);
+    } else {
+      return Future.value(true);
+    }
+  }
+
+
 }
